@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#061d39">
+  <meta name="description" content="滑動手指、閃避急流，挑戰陪萬安一路到 11 月 28 日吧">
+  <title>萬安，前方有洋流！</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22%23061d39%22/%3E%3Cpath%20d%3D%22M4%209Q10%203%2016%209T28%209M4%2017Q10%2011%2016%2017T28%2017M4%2025Q10%2019%2016%2025T28%2025%22%20fill%3D%22none%22%20stroke%3D%22%239bdad9%22%20stroke-width%3D%222%22/%3E%3C/svg%3E">
+  <link rel="preload" href="./assets/fonts/taiwan-game-serif.woff2?v=milk-caption-52" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="./assets/milk-life-empty.png" as="image">
+  <link rel="preload" href="./map.json?v=aurora-amber-30" as="fetch" crossorigin>
+  <link rel="preload" href="./assets/wanan-avatar.json?v=runner-mask-37" as="fetch" crossorigin>
+  <link rel="stylesheet" href="./style.css?v=unified-header-108">
+  <script type="module" src="./game.mjs?v=cane-mainland-only-121"></script>
+</head>
+<body>
+  <audio id="background-music" loop preload="none" aria-hidden="true">
+    <source src="./assets/audio/ocean-bgm-v15.ogg" type="audio/ogg">
+    <source src="./assets/audio/ocean-bgm-v15.mp3" type="audio/mpeg">
+  </audio>
+  <main class="game-shell" aria-label="避開洋流遊戲">
+    <header class="masthead">
+      <a class="brand" href="./" aria-label="重新整理遊戲，回到初始畫面" title="重新開始"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 8C10 0 21 16 30 8M2 16C10 8 21 24 30 16M2 24C10 16 21 32 30 24"/></svg><div><h1>避開洋流</h1><span>萬安加油</span></div></a>
+      <div class="masthead-actions"><button class="icon-button" id="music-toggle" aria-label="關閉聲音" aria-pressed="true" title="關閉聲音"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z" stroke-linejoin="round"/><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></svg></button><button class="icon-button" id="pause" aria-label="暫停遊戲" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14M16 5v14"/></svg></button><button class="icon-button header-help" id="help" aria-label="玩法與資料" title="玩法與資料"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 8a4 4 0 0 1 8 0c0 3-4 3-4 6M12 18h.01" stroke-linecap="round"/></svg></button></div>
+    </header>
+    <div class="header-actions stats-bar" role="group" aria-label="遊戲統計"><div class="date-stat" aria-label="目前撐到的日期"><span class="stat-label">撐到</span><strong id="game-date">5月13日</strong></div><div class="life-stat"><span class="stat-label">鮮奶護體</span><div class="life-meter" id="life-meter" role="img" aria-label="鮮奶護體剩餘 1 次" title="鮮奶護體剩餘 1 次"><img class="milk-bottle" src="./assets/milk-life.png" width="30" height="44" alt="" draggable="false"></div></div></div>
+    <div class="playfield-slot" id="playfield-slot">
+    <section class="playfield" id="playfield" aria-label="遊戲區域">
+      <canvas id="canvas" aria-label="在畫面任意位置按住拖曳，萬安隨手指位移，放開停止；也可使用方向鍵或 WASD，避開急流。"></canvas>
+      <div id="protection-label" class="sr-only" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+      <div class="map-compass" role="img" aria-label="指北針，N 表示北方，隨地圖旋轉">
+        <svg viewBox="0 0 40 48" aria-hidden="true">
+          <circle cx="20" cy="29" r="13" fill="#061d39c9"/>
+          <g id="compass-needle" transform="rotate(0 20 29)">
+            <text x="20" y="10" text-anchor="middle" fill="#d8eff2" font-size="10" font-weight="400">N</text>
+            <path d="M20 16 26 36 20 32Z" fill="#50b5c1"/>
+            <path d="M20 16 14 36 20 32Z" fill="#d8eff2"/>
+          </g>
+        </svg>
+      </div>
+      <div id="notice" class="sr-only" role="status" aria-live="polite"></div>
+      <div class="overlay" id="overlay">
+        <div class="start-panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" aria-describedby="panel-text">
+          <span class="eyebrow" id="panel-label">WAN-AN FIGHTING</span>
+          <div class="panel-hero"><h2 id="panel-title">撐到 11月28日<br>避開洋流 .ᐟ.ᐟ</h2><img class="hero-runner" src="./assets/wanan-running-edited.webp" alt="萬安奔跑與文件的卡通角色" width="52" height="66"><img class="hero-voting" data-src="./assets/voting-box.webp" alt="印有台灣圈選章的選票投入票箱" width="52" height="66"></div>
+          <p id="panel-text">按住拖曳，躲開急流。</p>
+          <button class="primary" id="start" disabled>載入遊戲中…<span aria-hidden="true">↗</span></button>
+          <p class="panel-note" id="audio-entry-note" role="status" hidden>點一下畫面開啟聲音</p>
+          <p class="panel-note" id="panel-note">5月13日 → 11月28日，每秒前進三天</p>
+        </div>
+      </div>
+    </section>
+    </div>
+    <dialog id="help-dialog" aria-labelledby="help-title">
+      <div class="help-heading"><h2 id="help-title">玩法與資料</h2><button class="icon-button" id="close-help" aria-label="關閉說明">×</button></div>
+      <p>按住畫面拖曳，移動萬安；放開即停止。</p>
+      <p>避開亮橘色急流，碰到即結束。撐到 11 月 28 日即可過關。</p>
+      <p>地圖會緩慢移動，陸地會限制通行。開啟說明或切換分頁時，遊戲自動暫停。</p>
+      <p class="credits"><strong>資料來源</strong><br>地圖使用 <a href="https://www.naturalearthdata.com/about/terms-of-use/" target="_blank" rel="noopener">Natural Earth</a>、<a href="https://github.com/topojson/world-atlas" target="_blank" rel="noopener">world-atlas</a> 及<a href="https://data.gov.tw/dataset/7442" target="_blank" rel="noopener">內政部國土測繪中心</a>的地理資料。洋流方向、強度與急流均為遊戲模擬，並非即時海況。</p>
+    </dialog>
+  </main>
+</body>
+</html>
